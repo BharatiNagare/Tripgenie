@@ -1,6 +1,6 @@
 import { CURRENCIES } from '../data/sampleDestinations';
 
-export function formatCurrency(amount: number, targetCurrency = 'USD', baseCurrency = 'USD'): string {
+export function formatCurrency(amount: number, targetCurrency = 'INR', baseCurrency = 'USD'): string {
   const targetInfo = CURRENCIES.find((c) => c.code === targetCurrency) || CURRENCIES[0];
   const baseInfo = CURRENCIES.find((c) => c.code === baseCurrency) || CURRENCIES[0];
 
@@ -8,17 +8,20 @@ export function formatCurrency(amount: number, targetCurrency = 'USD', baseCurre
   const amountInUSD = amount / (baseInfo.rateToUSD || 1);
   const convertedAmount = amountInUSD * (targetInfo.rateToUSD || 1);
 
-  return new Intl.NumberFormat('en-US', {
+  const locale = targetInfo.code === 'INR' ? 'en-IN' : 'en-US';
+
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: targetInfo.code,
     maximumFractionDigits: 0,
   }).format(convertedAmount);
 }
 
-export function convertAmount(amount: number, targetCurrency = 'USD', baseCurrency = 'USD'): number {
+export function convertAmount(amount: number, targetCurrency = 'INR', baseCurrency = 'USD'): number {
   const targetInfo = CURRENCIES.find((c) => c.code === targetCurrency) || CURRENCIES[0];
   const baseInfo = CURRENCIES.find((c) => c.code === baseCurrency) || CURRENCIES[0];
 
   const amountInUSD = amount / (baseInfo.rateToUSD || 1);
   return Math.round(amountInUSD * (targetInfo.rateToUSD || 1));
 }
+

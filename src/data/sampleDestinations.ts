@@ -113,10 +113,10 @@ export const POPULAR_INTERESTS = [
 ];
 
 export const CURRENCIES = [
+  { code: 'INR', symbol: '₹', name: 'Indian Rupee', rateToUSD: 86.5 },
   { code: 'USD', symbol: '$', name: 'US Dollar', rateToUSD: 1 },
   { code: 'EUR', symbol: '€', name: 'Euro', rateToUSD: 0.92 },
   { code: 'GBP', symbol: '£', name: 'British Pound', rateToUSD: 0.79 },
-  { code: 'INR', symbol: '₹', name: 'Indian Rupee', rateToUSD: 86.5 },
   { code: 'JPY', symbol: '¥', name: 'Japanese Yen', rateToUSD: 152 },
   { code: 'CAD', symbol: 'CA$', name: 'Canadian Dollar', rateToUSD: 1.38 },
   { code: 'AUD', symbol: 'A$', name: 'Australian Dollar', rateToUSD: 1.54 },

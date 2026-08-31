@@ -29,7 +29,7 @@ import { ActivitySwapModal } from './components/ActivitySwapModal';
 import { PromptInspectorModal } from './components/PromptInspectorModal';
 
 export default function App() {
-  const [currentCurrency, setCurrentCurrency] = useState<string>('USD');
+  const [currentCurrency, setCurrentCurrency] = useState<string>('INR');
   const [activeItinerary, setActiveItinerary] = useState<Itinerary | null>(SAMPLE_ITINERARY_TOKYO);
   const [viewMode, setViewMode] = useState<'planner' | 'itinerary'>('itinerary');
   const [isLoading, setIsLoading] = useState<boolean>(false);
