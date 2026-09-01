@@ -1,6 +1,6 @@
 {
   "name": "TripGenie",
-  "description": "AI-Powered Smart Travel Planner & Itinerary Generator with prompt engineering inspector, interactive budget analytics, day-by-day scheduling, and travel concierge.",
+  "description": "AI-Powered Smart Travel Planner & Itinerary Generator with interactive cabin seat pre-booking, digital boarding passes, budget analytics, day-by-day scheduling, and travel concierge.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

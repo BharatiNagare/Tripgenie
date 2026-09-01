@@ -18,6 +18,7 @@ export interface TripPreferences {
   transportPreference?: string;
   seatPreference?: 'window' | 'aisle' | 'extra-legroom' | 'front-cabin' | 'middle' | 'sleeper' | 'any';
   selectedSeatCode?: string;
+  transitPreBooking?: TransitPreBooking;
   specialRequests?: string;
   // Prompt engineering controls
   promptStrategy?: 'balanced' | 'hidden_gems' | 'budget_optimized' | 'luxury_concierge';
@@ -118,6 +119,44 @@ export interface PromptMetrics {
   techniquesUsed: string[];
 }
 
+export interface PassengerDetails {
+  id: string;
+  fullName: string;
+  age?: number;
+  gender?: 'male' | 'female' | 'other';
+  idNumber?: string; // Passport / National ID
+  seatCode: string;
+  seatType: 'window' | 'aisle' | 'middle' | 'extra-legroom' | 'front-cabin' | 'sleeper';
+  cabinClass?: 'Economy' | 'Premium Economy' | 'Business' | 'First Class' | 'Sleeper 2-Tier';
+  mealPreference?: string;
+  baggageAddon?: string;
+}
+
+export interface TransitPreBooking {
+  id: string;
+  bookingReference: string; // e.g. "TG-8942-FL"
+  status: 'confirmed' | 'held' | 'pending';
+  transitMode: 'flight' | 'train' | 'bus' | 'ferry';
+  carrierName: string; // e.g. "Air India / IndiGo Express" or "Eurostar Rail"
+  vehicleNumber: string; // e.g. "AI-802" or "TGV 9214"
+  departureCity: string;
+  arrivalCity: string;
+  departureDate: string;
+  departureTime: string;
+  arrivalTime: string;
+  cabinClass: 'Economy' | 'Premium Economy' | 'Business' | 'First Class' | 'Sleeper 2-Tier';
+  passengers: PassengerDetails[];
+  totalSeats: number;
+  seatCodes: string[];
+  totalPrice: number;
+  currency: string;
+  gateOrPlatform?: string;
+  terminal?: string;
+  bookingTimestamp: string;
+  holdExpiresAt?: string;
+  specialAssistance?: boolean;
+}
+
 export interface Itinerary {
   id: string;
   createdAt: string;
@@ -134,6 +173,7 @@ export interface Itinerary {
   budgetBreakdown: BudgetCategory[];
   packingList: PackingItem[];
   localGuide: LocalGuide;
+  transitPreBooking?: TransitPreBooking;
   promptMetrics?: PromptMetrics;
 }
 

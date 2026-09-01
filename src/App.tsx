@@ -26,7 +26,6 @@ import { SavedTripsModal } from './components/SavedTripsModal';
 import { ExploreModal } from './components/ExploreModal';
 import { ExportModal } from './components/ExportModal';
 import { ActivitySwapModal } from './components/ActivitySwapModal';
-import { PromptInspectorModal } from './components/PromptInspectorModal';
 
 export default function App() {
   const [currentCurrency, setCurrentCurrency] = useState<string>('INR');
@@ -39,7 +38,6 @@ export default function App() {
   const [isConciergeOpen, setIsConciergeOpen] = useState<boolean>(false);
   const [isSavedTripsOpen, setIsSavedTripsOpen] = useState<boolean>(false);
   const [isExploreOpen, setIsExploreOpen] = useState<boolean>(false);
-  const [isPromptLabOpen, setIsPromptLabOpen] = useState<boolean>(false);
   const [isExportOpen, setIsExportOpen] = useState<boolean>(false);
   const [swapActivityData, setSwapActivityData] = useState<{ activity: Activity; dayTheme: string } | null>(null);
 
@@ -165,7 +163,6 @@ export default function App() {
         onOpenNewTrip={() => setViewMode('planner')}
         onOpenSavedTrips={() => setIsSavedTripsOpen(true)}
         onOpenExplore={() => setIsExploreOpen(true)}
-        onOpenPromptLab={() => setIsPromptLabOpen(true)}
         savedTripsCount={savedTrips.length}
         hasActiveTrip={!!activeItinerary}
         onLoadDemo={handleLoadDemo}
@@ -179,7 +176,6 @@ export default function App() {
               onGenerate={handleGenerateItinerary}
               isLoading={isLoading}
               currentCurrency={currentCurrency}
-              onOpenPromptLab={() => setIsPromptLabOpen(true)}
             />
 
             {/* Academic Project Highlights & Architecture Banner */}
@@ -187,7 +183,7 @@ export default function App() {
               <div className="flex items-center gap-2 text-indigo-700">
                 <Cpu className="w-5 h-5" />
                 <h2 className="text-base font-bold font-display uppercase tracking-wider">
-                  Academic Project Architecture: Gemini 3.7 Flash &amp; Structured Prompting
+                  Academic Project Architecture: Gemini 3.7 Flash &amp; Structured Output
                 </h2>
               </div>
 
@@ -233,7 +229,6 @@ export default function App() {
               onSaveTrip={handleSaveTrip}
               isSaved={isCurrentTripSaved}
               onOpenConcierge={() => setIsConciergeOpen(true)}
-              onOpenPromptLab={() => setIsPromptLabOpen(true)}
               onOpenExport={() => setIsExportOpen(true)}
               onSwapActivityRequest={(act, dayTheme) => {
                 setSwapActivityData({ activity: act, dayTheme });
@@ -302,30 +297,17 @@ export default function App() {
         onApplySwap={handleApplySwap}
       />
 
-      <PromptInspectorModal
-        isOpen={isPromptLabOpen}
-        onClose={() => setIsPromptLabOpen(false)}
-        metrics={activeItinerary?.promptMetrics}
-      />
-
       {/* Academic Footer */}
       <footer className="border-t border-slate-200 bg-white/80 backdrop-blur-md py-6 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="font-extrabold font-display text-slate-900">TripGenie</span>
             <span>&middot;</span>
-            <span>Academic Mini-Project in AI &amp; Prompt Engineering</span>
+            <span>Academic Mini-Project in AI &amp; Intelligent Travel Planning</span>
           </div>
 
           <div className="flex items-center gap-4 text-[11px]">
             <span>Powered by Gemini 3.7 Flash</span>
-            <span>&middot;</span>
-            <button
-              onClick={() => setIsPromptLabOpen(true)}
-              className="text-indigo-600 hover:text-indigo-800 font-semibold cursor-pointer underline"
-            >
-              Prompt Architecture
-            </button>
           </div>
         </div>
       </footer>

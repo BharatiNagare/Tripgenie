@@ -19,7 +19,6 @@ interface NavbarProps {
   onOpenNewTrip: () => void;
   onOpenSavedTrips: () => void;
   onOpenExplore: () => void;
-  onOpenPromptLab: () => void;
   savedTripsCount: number;
   hasActiveTrip: boolean;
   onLoadDemo: (demoId: string) => void;
@@ -31,7 +30,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenNewTrip,
   onOpenSavedTrips,
   onOpenExplore,
-  onOpenPromptLab,
   savedTripsCount,
   hasActiveTrip,
   onLoadDemo,
@@ -77,19 +75,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Compass className="w-4 h-4 text-teal-600" />
               <span>Explore</span>
-            </button>
-
-            <button
-              id="nav-prompt-lab-btn"
-              onClick={onOpenPromptLab}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 rounded-lg transition-colors cursor-pointer"
-              title="Inspect Prompt Engineering architecture, System Prompts & LLM token metrics"
-            >
-              <Cpu className="w-4 h-4 text-indigo-600" />
-              <span>Prompt Lab</span>
-              <span className="text-[10px] bg-indigo-200 text-indigo-800 px-1 py-0.2 rounded font-bold">
-                Tech
-              </span>
             </button>
 
             <button
@@ -170,29 +155,16 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden py-3 border-t border-slate-200 space-y-2">
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => {
-                  onOpenExplore();
-                  setMobileMenuOpen(false);
-                }}
-                className="flex items-center gap-2 p-2.5 rounded-lg bg-slate-50 text-slate-800 text-sm font-semibold"
-              >
-                <Compass className="w-4 h-4 text-teal-600" />
-                <span>Explore</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  onOpenPromptLab();
-                  setMobileMenuOpen(false);
-                }}
-                className="flex items-center gap-2 p-2.5 rounded-lg bg-indigo-50 text-indigo-800 text-sm font-semibold"
-              >
-                <Cpu className="w-4 h-4 text-indigo-600" />
-                <span>Prompt Lab</span>
-              </button>
-            </div>
+            <button
+              onClick={() => {
+                onOpenExplore();
+                setMobileMenuOpen(false);
+              }}
+              className="w-full flex items-center gap-2 p-2.5 rounded-lg bg-slate-50 text-slate-800 text-sm font-semibold"
+            >
+              <Compass className="w-4 h-4 text-teal-600" />
+              <span>Explore Destinations</span>
+            </button>
 
             <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50">
               <button

@@ -38,9 +38,15 @@ import {
   List,
   Armchair,
   Plane,
-  Train
+  Train,
+  Bus,
+  Ship,
+  QrCode,
+  Users,
+  Luggage,
+  FileText
 } from 'lucide-react';
-import { Itinerary, Activity, DayPlan, PackingItem } from '../types';
+import { Itinerary, Activity, DayPlan, PackingItem, TransitPreBooking } from '../types';
 import { formatCurrency, convertAmount } from '../lib/currency';
 import { getPlacePhoto, getDayBannerPhoto } from '../lib/placeImages';
 import { PhotoLightboxModal } from './PhotoLightboxModal';
@@ -54,7 +60,6 @@ interface ItineraryViewProps {
   onSaveTrip: (trip: Itinerary) => void;
   isSaved: boolean;
   onOpenConcierge: () => void;
-  onOpenPromptLab: () => void;
   onOpenExport: () => void;
   onSwapActivityRequest: (act: Activity, dayTheme: string) => void;
   onUpdateItinerary: (updated: Itinerary) => void;
@@ -67,12 +72,11 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({
   onSaveTrip,
   isSaved,
   onOpenConcierge,
-  onOpenPromptLab,
   onOpenExport,
   onSwapActivityRequest,
   onUpdateItinerary,
 }) => {
-  const [activeTab, setActiveTab] = useState<'timeline' | 'gallery' | 'map' | 'budget' | 'packing' | 'guide' | 'prompt'>('timeline');
+  const [activeTab, setActiveTab] = useState<'timeline' | 'gallery' | 'transit' | 'budget' | 'packing' | 'guide'>('timeline');
   const [selectedDayNumber, setSelectedDayNumber] = useState<number | 'all'>('all');
   const [viewMode, setViewMode] = useState<'detailed' | 'compact'>('detailed');
   const [lightboxActivity, setLightboxActivity] = useState<{ activity: Activity; dayNumber?: number } | null>(null);
@@ -89,6 +93,19 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({
         ...itinerary.preferences,
         selectedSeatCode: seat.code,
         seatPreference: seat.type,
+      },
+    });
+  };
+
+  // Handle Full Pre-Booking Confirmation
+  const handlePreBookingConfirm = (booking: TransitPreBooking) => {
+    onUpdateItinerary({
+      ...itinerary,
+      transitPreBooking: booking,
+      preferences: {
+        ...itinerary.preferences,
+        transitPreBooking: booking,
+        selectedSeatCode: booking.seatCodes[0] || itinerary.preferences?.selectedSeatCode || '12A',
       },
     });
   };
@@ -252,19 +269,23 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({
               {itinerary.preferences?.groupType || 'Travelers'}
             </span>
 
-            {/* Confirmed Seat Badge & Interactive Selector */}
+            {/* Confirmed Seat Badge & Interactive Pre-Booking Selector */}
             <button
               onClick={() => setIsSeatModalOpen(true)}
               className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-500/25 hover:bg-teal-500/40 backdrop-blur-xs text-teal-200 hover:text-white text-xs font-bold border border-teal-400/40 transition-all cursor-pointer shadow-xs"
-              title="Click to change flight / train seat"
+              title="Click to view or change pre-booked transit seat"
             >
               <Armchair className="w-3.5 h-3.5 text-teal-300" />
-              <span>Seat {itinerary.preferences?.selectedSeatCode || '12A'}</span>
+              {itinerary.transitPreBooking ? (
+                <span>Pre-Booked: {itinerary.transitPreBooking.seatCodes.join(', ')}</span>
+              ) : (
+                <span>Seat {itinerary.preferences?.selectedSeatCode || '12A'}</span>
+              )}
               <span className="text-[10px] text-teal-300 font-normal capitalize">
                 ({(itinerary.preferences?.seatPreference || 'window').replace('-', ' ')})
               </span>
-              <span className="text-[10px] bg-teal-400/30 px-1.5 py-0.2 rounded text-white ml-0.5">
-                Change &rarr;
+              <span className="text-[10px] bg-teal-400/30 px-1.5 py-0.2 rounded text-white ml-0.5 font-bold">
+                {itinerary.transitPreBooking ? 'Pass &rarr;' : 'Pre-Book &rarr;'}
               </span>
             </button>
           </div>
@@ -313,19 +334,6 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({
                 {itinerary.localGuide?.averageTemp || 'Mild'}
               </span>
             </div>
-
-            <div className="p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
-              <span className="text-[11px] text-slate-300 font-semibold block">Prompt Engineering</span>
-              <span className="text-sm font-bold text-indigo-300 block mt-1">
-                Gemini 3.7 Flash
-              </span>
-              <button
-                onClick={onOpenPromptLab}
-                className="text-[10px] text-teal-300 hover:text-white underline font-semibold mt-0.5 cursor-pointer block"
-              >
-                Inspect CoT Metrics &rarr;
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -335,11 +343,11 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({
         <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
           {[
             { id: 'timeline', label: 'Daily Timeline', icon: Calendar, badge: `${itinerary.days.length} Days` },
+            { id: 'transit', label: 'Transit & Seat Pass', icon: Armchair, badge: itinerary.transitPreBooking ? `Seat ${itinerary.transitPreBooking.seatCodes[0]}` : 'Pre-Book' },
             { id: 'gallery', label: 'Place Photos', icon: Camera, badge: 'Visual Ref' },
             { id: 'budget', label: 'Budget Analytics', icon: DollarSign },
             { id: 'packing', label: 'Packing Checklist', icon: Layers, badge: `${packedCount}/${itinerary.packingList.length}` },
             { id: 'guide', label: 'Local Culture & Guide', icon: Compass },
-            { id: 'prompt', label: 'Prompt Lab & Architecture', icon: Cpu, badge: 'Tech' },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -1220,138 +1228,208 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({
         </div>
       )}
 
-      {/* TAB 5: PROMPT ENGINEERING LAB & ACADEMIC VIEW */}
-      {activeTab === 'prompt' && (
+      {/* TAB: TRANSIT SEATS & BOARDING PASS */}
+      {activeTab === 'transit' && (
         <div className="space-y-6">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-indigo-200 shadow-sm space-y-6">
+          {/* Header Card */}
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold border border-indigo-200 mb-2">
-                  <Cpu className="w-3.5 h-3.5" />
-                  <span>College Academic Mini-Project Inspector</span>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 text-teal-700 text-xs font-bold border border-teal-200 mb-2">
+                  <Armchair className="w-3.5 h-3.5" />
+                  <span>Pre-Booking Traveling Seat Pass</span>
                 </div>
                 <h2 className="text-xl sm:text-2xl font-bold font-display text-slate-900">
-                  AI Architecture & Prompt Engineering Pipeline
+                  Transit Reservations &amp; Cabin Seating
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-                  Technical audit of the LLM pipeline, system framing, JSON schema constraints, and CoT reasoning.
+                  Confirmed seat pre-bookings, digital boarding passes, and passenger travel perks for {itinerary.destination}.
                 </p>
               </div>
 
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => copyPromptText(JSON.stringify(itinerary, null, 2))}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-xl transition-colors cursor-pointer"
+                  type="button"
+                  onClick={() => setIsSeatModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-teal-600 hover:bg-teal-700 text-white rounded-xl shadow-xs transition-colors cursor-pointer"
                 >
-                  {copiedPrompt ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-                  <span>{copiedPrompt ? 'Copied JSON AST' : 'Copy Full JSON Output'}</span>
+                  <Plane className="w-3.5 h-3.5" />
+                  <span>{itinerary.transitPreBooking ? 'Modify Pre-Booked Seats' : 'Pre-Book Seats on Cabin Map'}</span>
                 </button>
               </div>
             </div>
 
-            {/* Performance & Execution Matrix */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="p-3.5 rounded-2xl bg-indigo-50/60 border border-indigo-100">
-                <span className="text-[11px] text-slate-500 font-semibold block">Model Alias</span>
-                <span className="text-sm font-extrabold text-indigo-900 font-display">
-                  {itinerary.promptMetrics?.model || 'gemini-3.7-flash'}
-                </span>
-                <span className="text-[10px] text-slate-400 block mt-0.5">Google GenAI SDK v2.4</span>
+            {/* Digital Boarding Pass Ticket */}
+            <div className="bg-gradient-to-r from-slate-950 via-teal-950 to-slate-900 rounded-3xl text-white shadow-xl border border-teal-700/50 overflow-hidden relative">
+              <div className="p-4 sm:p-6 border-b border-white/10 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <Plane className="w-5 h-5 text-teal-400" />
+                  <span className="font-extrabold text-sm uppercase tracking-wider text-white">
+                    {itinerary.transitPreBooking?.carrierName || 'Air India / IndiGo Express'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-0.5 rounded-full bg-emerald-500/25 text-emerald-300 border border-emerald-400/40 text-xs font-extrabold">
+                    PRE-BOOKED &amp; CONFIRMED
+                  </span>
+                  <span className="text-xs text-slate-300 font-mono">
+                    PNR: {itinerary.transitPreBooking?.bookingReference || 'TG-8492-FL'}
+                  </span>
+                </div>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-indigo-50/60 border border-indigo-100">
-                <span className="text-[11px] text-slate-500 font-semibold block">Latency</span>
-                <span className="text-sm font-extrabold text-indigo-900 font-display">
-                  {itinerary.promptMetrics?.generationLatencyMs || 1280} ms
-                </span>
-                <span className="text-[10px] text-emerald-600 font-bold block mt-0.5">Fast Response</span>
-              </div>
+              <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-12 gap-6">
+                <div className="md:col-span-8 space-y-4">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">From</span>
+                      <span className="text-xl sm:text-2xl font-black font-display text-white">
+                        {itinerary.transitPreBooking?.departureCity || itinerary.preferences?.sourceCity || 'Origin'}
+                      </span>
+                      <span className="text-xs text-teal-300 block">
+                        08:45 AM &middot; {itinerary.days[0]?.date || itinerary.preferences?.startDate || 'Day 1'}
+                      </span>
+                    </div>
 
-              <div className="p-3.5 rounded-2xl bg-indigo-50/60 border border-indigo-100">
-                <span className="text-[11px] text-slate-500 font-semibold block">Token Output Est.</span>
-                <span className="text-sm font-extrabold text-indigo-900 font-display">
-                  ~{itinerary.promptMetrics?.responseTokensEstimate || 2400} tokens
-                </span>
-                <span className="text-[10px] text-slate-400 block mt-0.5">Strict JSON Schema</span>
-              </div>
+                    <div className="flex flex-col items-center px-3">
+                      <span className="text-[10px] text-slate-400 font-bold mb-1">Direct Transit</span>
+                      <div className="w-20 sm:w-28 h-0.5 bg-teal-400/40 relative">
+                        <span className="absolute left-1/2 -top-1.5 -translate-x-1/2 w-3 h-3 rounded-full bg-teal-400" />
+                      </div>
+                      <span className="text-[10px] text-teal-300 mt-1 font-mono">
+                        {itinerary.transitPreBooking?.vehicleNumber || 'AI-842'}
+                      </span>
+                    </div>
 
-              <div className="p-3.5 rounded-2xl bg-indigo-50/60 border border-indigo-100">
-                <span className="text-[11px] text-slate-500 font-semibold block">Temperature</span>
-                <span className="text-sm font-extrabold text-indigo-900 font-display">
-                  {itinerary.promptMetrics?.temperature ?? 0.7}
-                </span>
-                <span className="text-[10px] text-slate-400 block mt-0.5">Controlled Sampling</span>
+                    <div className="text-right">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">To</span>
+                      <span className="text-xl sm:text-2xl font-black font-display text-white">
+                        {itinerary.destination}
+                      </span>
+                      <span className="text-xs text-teal-300 block">
+                        11:15 AM &middot; {itinerary.days[0]?.date || itinerary.preferences?.startDate || 'Day 1'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Seat details */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 text-xs">
+                    <div>
+                      <span className="text-[10px] uppercase text-slate-400 font-bold block">Seat(s)</span>
+                      <span className="text-base font-extrabold text-teal-300">
+                        {itinerary.transitPreBooking?.seatCodes.join(', ') || itinerary.preferences?.selectedSeatCode || '12A'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] uppercase text-slate-400 font-bold block">Cabin Class</span>
+                      <span className="text-xs font-bold text-white">
+                        {itinerary.transitPreBooking?.cabinClass || 'Economy Premium'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] uppercase text-slate-400 font-bold block">Gate / Platform</span>
+                      <span className="text-xs font-bold text-white">
+                        {itinerary.transitPreBooking?.gateOrPlatform || 'Gate 14B'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] uppercase text-slate-400 font-bold block">Baggage Allowance</span>
+                      <span className="text-xs font-bold text-teal-200">
+                        7kg Cabin + 20kg Included
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* QR Section */}
+                <div className="md:col-span-4 bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center text-center space-y-3">
+                  <div className="p-2 bg-white rounded-xl shadow-inner">
+                    <QrCode className="w-24 h-24 text-slate-950" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-widest">
+                      Digital Boarding Key
+                    </span>
+                    <span className="text-xs font-mono font-bold text-teal-300">
+                      {itinerary.transitPreBooking?.bookingReference || 'TG-8492-FL'}-PASS
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Prompt Engineering Techniques Breakdown */}
+            {/* Passenger Manifest */}
             <div className="space-y-3">
-              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                Implemented Prompt Engineering Methodologies
+              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <Users className="w-4 h-4 text-teal-600" />
+                <span>Pre-Booked Passenger Roster &amp; Meal Preferences</span>
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
-                  <strong className="font-bold text-indigo-900 block">1. Role-Based System Framing</strong>
-                  <p className="text-slate-600 leading-relaxed">
-                    Instructing the model as &ldquo;TripGenie Master Geographer &amp; Travel AI&rdquo; primes latent weights for realistic venue names, opening hour awareness, and spatial transit logic.
-                  </p>
-                </div>
 
-                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
-                  <strong className="font-bold text-indigo-900 block">2. Strict Type.OBJECT JSON Schema</strong>
-                  <p className="text-slate-600 leading-relaxed">
-                    Bypasses fragile regex parsing by forcing Gemini to output syntactically valid JSON conforming to our nested TypeScript schemas.
-                  </p>
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {(itinerary.transitPreBooking?.passengers && itinerary.transitPreBooking.passengers.length > 0
+                  ? itinerary.transitPreBooking.passengers
+                  : [
+                      {
+                        id: 'pax-1',
+                        fullName: 'Lead Traveler',
+                        age: 29,
+                        seatCode: itinerary.preferences?.selectedSeatCode || '12A',
+                        seatType: (itinerary.preferences?.seatPreference as any) || 'window',
+                        cabinClass: 'Economy',
+                        mealPreference: 'Standard Meal / Chef Special',
+                        baggageAddon: '7kg Cabin + 20kg Check-in (Included)',
+                      },
+                    ]
+                ).map((pax, idx) => (
+                  <div key={pax.id || idx} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-teal-600 text-white flex items-center justify-center text-xs font-bold">
+                          {idx + 1}
+                        </span>
+                        <strong className="text-sm font-bold text-slate-900">{pax.fullName}</strong>
+                      </div>
+                      <span className="px-2.5 py-0.5 rounded-lg bg-teal-100 text-teal-900 text-xs font-extrabold">
+                        Seat {pax.seatCode}
+                      </span>
+                    </div>
 
-                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
-                  <strong className="font-bold text-indigo-900 block">3. Geographic &amp; Chronological CoT</strong>
-                  <p className="text-slate-600 leading-relaxed">
-                    Forces step-by-step spatial clustering: morning, afternoon, and evening stops are geographically bound to minimize transit dead-time.
-                  </p>
-                </div>
-
-                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
-                  <strong className="font-bold text-indigo-900 block">4. Dynamic Constraint Modulation</strong>
-                  <p className="text-slate-600 leading-relaxed">
-                    Injects budget tiers, party size, pace constraints, and dietary rules directly into the user prompt template before generation.
-                  </p>
-                </div>
+                    <div className="text-xs text-slate-600 space-y-1 pt-1 border-t border-slate-200/60">
+                      <div className="flex justify-between">
+                        <span>Meal Choice:</span>
+                        <span className="font-semibold text-slate-800">{pax.mealPreference || 'Standard Meal'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Baggage:</span>
+                        <span className="font-semibold text-teal-700">{pax.baggageAddon || 'Included'}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Actual System Instruction & User Prompt Viewer */}
-            <div className="space-y-4 pt-2">
-              <div>
-                <div className="flex items-center justify-between text-xs font-bold text-slate-700 mb-1.5">
-                  <span>System Instruction (Server-Side)</span>
-                  <button
-                    onClick={() => copyPromptText(itinerary.promptMetrics?.systemInstructionUsed || '')}
-                    className="text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
-                  >
-                    <Copy className="w-3 h-3" />
-                    <span>Copy</span>
-                  </button>
-                </div>
-                <pre className="p-3.5 bg-slate-950 text-slate-200 rounded-2xl text-[11px] font-mono whitespace-pre-wrap overflow-x-auto leading-relaxed max-h-48 border border-slate-800">
-                  {itinerary.promptMetrics?.systemInstructionUsed || 'You are TripGenie Master Travel AI...'}
-                </pre>
+            {/* Inclusions & Guarantee */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div className="p-3.5 rounded-2xl bg-teal-50/70 border border-teal-200 space-y-1">
+                <span className="font-bold text-teal-900 block">✨ Guaranteed Seat Allocation</span>
+                <p className="text-teal-800">
+                  Your seat selection is locked with the carrier system for seamless boarding without last-minute changes.
+                </p>
               </div>
 
-              <div>
-                <div className="flex items-center justify-between text-xs font-bold text-slate-700 mb-1.5">
-                  <span>Interpolated User Prompt</span>
-                  <button
-                    onClick={() => copyPromptText(itinerary.promptMetrics?.promptUsed || '')}
-                    className="text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
-                  >
-                    <Copy className="w-3 h-3" />
-                    <span>Copy</span>
-                  </button>
-                </div>
-                <pre className="p-3.5 bg-slate-950 text-slate-200 rounded-2xl text-[11px] font-mono whitespace-pre-wrap overflow-x-auto leading-relaxed max-h-48 border border-slate-800">
-                  {itinerary.promptMetrics?.promptUsed || 'Generate a structured travel itinerary...'}
-                </pre>
+              <div className="p-3.5 rounded-2xl bg-teal-50/70 border border-teal-200 space-y-1">
+                <span className="font-bold text-teal-900 block">🧳 Priority Cabin Storage</span>
+                <p className="text-teal-800">
+                  Dedicated overhead bin space allocated directly above your reserved row.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-teal-50/70 border border-teal-200 space-y-1">
+                <span className="font-bold text-teal-900 block">📱 Instant Mobile Updates</span>
+                <p className="text-teal-800">
+                  Live departure gate alerts, platform changes, and baggage carousel updates sent via TripGenie.
+                </p>
               </div>
             </div>
           </div>
@@ -1373,10 +1451,17 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({
         isOpen={isSeatModalOpen}
         currentSeatCode={itinerary.preferences?.selectedSeatCode || '12A'}
         currentPreference={itinerary.preferences?.seatPreference || 'window'}
+        currentBooking={itinerary.transitPreBooking || itinerary.preferences?.transitPreBooking}
         destination={itinerary.destination}
+        sourceCity={itinerary.preferences?.sourceCity || 'Origin Hub'}
+        travelDate={itinerary.days[0]?.date || itinerary.preferences?.startDate}
+        groupType={itinerary.preferences?.groupType}
+        currency={currentCurrency}
         onSelectSeat={handleSeatChange}
+        onConfirmPreBooking={handlePreBookingConfirm}
         onClose={() => setIsSeatModalOpen(false)}
       />
     </div>
   );
 };
+

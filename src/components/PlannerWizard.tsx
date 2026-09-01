@@ -23,7 +23,7 @@ import {
   Armchair,
   CheckCircle2
 } from 'lucide-react';
-import { TripPreferences, TravelGroup, BudgetTier, TravelPace } from '../types';
+import { TripPreferences, TravelGroup, BudgetTier, TravelPace, TransitPreBooking } from '../types';
 import { POPULAR_INTERESTS, CURRENCIES } from '../data/sampleDestinations';
 import { SeatSelectorModal, SeatInfo } from './SeatSelectorModal';
 
@@ -31,7 +31,6 @@ interface PlannerWizardProps {
   onGenerate: (prefs: TripPreferences) => void;
   isLoading: boolean;
   currentCurrency: string;
-  onOpenPromptLab: () => void;
 }
 
 const POPULAR_DESTINATIONS = [
@@ -64,7 +63,6 @@ export const PlannerWizard: React.FC<PlannerWizardProps> = ({
   onGenerate,
   isLoading,
   currentCurrency,
-  onOpenPromptLab,
 }) => {
   const [destination, setDestination] = useState('');
   const [sourceCity, setSourceCity] = useState('');
@@ -83,6 +81,7 @@ export const PlannerWizard: React.FC<PlannerWizardProps> = ({
   const [transport, setTransport] = useState('Public Transit & Metro');
   const [seatPreference, setSeatPreference] = useState<'window' | 'aisle' | 'extra-legroom' | 'front-cabin' | 'sleeper' | 'any'>('window');
   const [selectedSeatCode, setSelectedSeatCode] = useState<string>('12A');
+  const [transitPreBooking, setTransitPreBooking] = useState<TransitPreBooking | undefined>(undefined);
   const [isSeatModalOpen, setIsSeatModalOpen] = useState(false);
   const [specialRequests, setSpecialRequests] = useState('');
 
@@ -146,6 +145,7 @@ export const PlannerWizard: React.FC<PlannerWizardProps> = ({
       transportPreference: transport,
       seatPreference,
       selectedSeatCode,
+      transitPreBooking,
       specialRequests: specialRequests.trim() || undefined,
       promptStrategy,
       creativityLevel,
@@ -191,16 +191,6 @@ export const PlannerWizard: React.FC<PlannerWizardProps> = ({
                 </div>
               </div>
             </div>
-
-            <button
-              type="button"
-              id="prompt-lab-quick-link"
-              onClick={onOpenPromptLab}
-              className="self-start sm:self-center inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold backdrop-blur-xs transition-colors border border-white/15 cursor-pointer shrink-0"
-            >
-              <Cpu className="w-4 h-4 text-teal-300" />
-              <span>Prompt Architecture</span>
-            </button>
           </div>
         </div>
 
@@ -535,27 +525,40 @@ export const PlannerWizard: React.FC<PlannerWizardProps> = ({
               </div>
             </div>
 
-            {/* Seat Selection Option for Flight & Transit */}
+            {/* Pre-Booking Seat Option for Flight & Transit */}
             <div className="pt-2 border-t border-slate-200/80 space-y-2.5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                  <Armchair className="w-3.5 h-3.5 text-teal-600" />
-                  <span>Seat Selection Preference (Flight / Train)</span>
-                  <span className="px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 text-[10px] font-extrabold border border-teal-200">
-                    Selected: {selectedSeatCode}
-                  </span>
-                </label>
+                <div>
+                  <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Armchair className="w-3.5 h-3.5 text-teal-600" />
+                    <span>Pre-Book Traveling Seat (Flight &amp; Rail Transit)</span>
+                    {transitPreBooking ? (
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold border border-emerald-300 flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <span>Pre-Booked ({transitPreBooking.bookingReference})</span>
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 text-[10px] font-extrabold border border-teal-200">
+                        Seat: {selectedSeatCode}
+                      </span>
+                    )}
+                  </label>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Reserve preferred seating &amp; lock digital boarding passes in advance.
+                  </p>
+                </div>
 
-                {/* Interactive Map Trigger Button */}
+                {/* Interactive Map & Prebooking Trigger Button */}
                 <button
                   type="button"
+                  id="prebook-seats-btn"
                   onClick={() => setIsSeatModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-700 hover:text-teal-900 bg-teal-50 hover:bg-teal-100 border border-teal-200/80 px-2.5 py-1 rounded-xl transition-colors cursor-pointer self-start sm:self-auto"
+                  className="inline-flex items-center gap-1.5 text-xs font-extrabold text-white bg-teal-600 hover:bg-teal-700 px-3.5 py-1.5 rounded-xl shadow-xs transition-all cursor-pointer self-start sm:self-auto"
                 >
-                  <Plane className="w-3.5 h-3.5 text-teal-600" />
-                  <span>Select on Cabin Map</span>
-                  <span className="text-[10px] bg-teal-600 text-white px-1.5 py-0.2 rounded font-bold">
-                    {selectedSeatCode}
+                  <Plane className="w-3.5 h-3.5 text-teal-200" />
+                  <span>{transitPreBooking ? 'Manage Pre-Booked Seats' : 'Pre-Book Seats on Cabin Map'}</span>
+                  <span className="text-[10px] bg-white/20 text-white px-1.5 py-0.2 rounded font-mono font-bold">
+                    {transitPreBooking ? transitPreBooking.seatCodes.join(', ') : selectedSeatCode}
                   </span>
                 </button>
               </div>
@@ -706,13 +709,24 @@ export const PlannerWizard: React.FC<PlannerWizardProps> = ({
         </form>
       </div>
 
-      {/* Interactive Cabin Seat Selector Modal */}
+      {/* Interactive Cabin Seat Selector & Pre-Booking Modal */}
       <SeatSelectorModal
         isOpen={isSeatModalOpen}
         currentSeatCode={selectedSeatCode}
         currentPreference={seatPreference}
+        currentBooking={transitPreBooking}
         destination={destination || 'Destination'}
+        sourceCity={sourceCity || 'Origin Hub'}
+        travelDate={`Flexible Departure (${durationDays} Days)`}
+        groupType={groupType}
+        currency={currentCurrency}
         onSelectSeat={handleSeatSelected}
+        onConfirmPreBooking={(booking) => {
+          setTransitPreBooking(booking);
+          if (booking.seatCodes.length > 0) {
+            setSelectedSeatCode(booking.seatCodes[0]);
+          }
+        }}
         onClose={() => setIsSeatModalOpen(false)}
       />
     </div>
