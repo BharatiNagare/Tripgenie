@@ -16,6 +16,8 @@ export interface TripPreferences {
   dietaryRestrictions?: string[];
   accommodationPreference?: string;
   transportPreference?: string;
+  seatPreference?: 'window' | 'aisle' | 'extra-legroom' | 'front-cabin' | 'middle' | 'sleeper' | 'any';
+  selectedSeatCode?: string;
   specialRequests?: string;
   // Prompt engineering controls
   promptStrategy?: 'balanced' | 'hidden_gems' | 'budget_optimized' | 'luxury_concierge';
@@ -32,6 +34,7 @@ export interface Activity {
   estimatedCost: number; // in preferred currency
   durationMinutes: number;
   category: 'Sightseeing' | 'Food & Drink' | 'Adventure & Nature' | 'Culture & History' | 'Relaxation' | 'Nightlife' | 'Shopping' | 'Transit' | 'Photography & Views';
+  imageUrl?: string;
   insiderTip?: string;
   bestTimeToVisit?: string;
   coordinates?: {
@@ -46,6 +49,7 @@ export interface DayPlan {
   dayNumber: number;
   title: string; // e.g. "Day 1: Historic Heart & Sunset Views"
   theme: string;
+  bannerImageUrl?: string;
   date?: string;
   activities: Activity[];
   dailyMealRecommendations: {

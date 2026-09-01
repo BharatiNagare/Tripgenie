@@ -18,10 +18,14 @@ import {
   Cpu,
   Zap,
   Bed,
-  Car
+  Car,
+  Plane,
+  Armchair,
+  CheckCircle2
 } from 'lucide-react';
 import { TripPreferences, TravelGroup, BudgetTier, TravelPace } from '../types';
 import { POPULAR_INTERESTS, CURRENCIES } from '../data/sampleDestinations';
+import { SeatSelectorModal, SeatInfo } from './SeatSelectorModal';
 
 interface PlannerWizardProps {
   onGenerate: (prefs: TripPreferences) => void;
@@ -32,17 +36,17 @@ interface PlannerWizardProps {
 
 const POPULAR_DESTINATIONS = [
   'Tokyo, Japan',
+  'Goa, India',
   'Paris, France',
   'Bali, Indonesia',
+  'Jaipur, India',
   'Rome, Italy',
-  'Kyoto, Japan',
-  'Barcelona, Spain',
   'Interlaken, Switzerland',
-  'New York City, USA',
-  'London, UK',
   'Dubai, UAE',
+  'Kerala, India',
+  'Kyoto, Japan',
+  'New York City, USA',
   'Singapore',
-  'Amsterdam, Netherlands',
 ];
 
 const DIETARY_OPTIONS = [
@@ -77,6 +81,9 @@ export const PlannerWizard: React.FC<PlannerWizardProps> = ({
   const [selectedDietary, setSelectedDietary] = useState<string[]>([]);
   const [accommodation, setAccommodation] = useState('Boutique Hotel / Central Airbnb');
   const [transport, setTransport] = useState('Public Transit & Metro');
+  const [seatPreference, setSeatPreference] = useState<'window' | 'aisle' | 'extra-legroom' | 'front-cabin' | 'sleeper' | 'any'>('window');
+  const [selectedSeatCode, setSelectedSeatCode] = useState<string>('12A');
+  const [isSeatModalOpen, setIsSeatModalOpen] = useState(false);
   const [specialRequests, setSpecialRequests] = useState('');
 
   // Academic prompt engineering settings
@@ -111,6 +118,11 @@ export const PlannerWizard: React.FC<PlannerWizardProps> = ({
     setDestination(randomDest);
   };
 
+  const handleSeatSelected = (seat: SeatInfo) => {
+    setSelectedSeatCode(seat.code);
+    setSeatPreference(seat.type);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!destination.trim()) {
@@ -132,6 +144,8 @@ export const PlannerWizard: React.FC<PlannerWizardProps> = ({
       dietaryRestrictions: selectedDietary.length > 0 ? selectedDietary : undefined,
       accommodationPreference: accommodation,
       transportPreference: transport,
+      seatPreference,
+      selectedSeatCode,
       specialRequests: specialRequests.trim() || undefined,
       promptStrategy,
       creativityLevel,
@@ -145,27 +159,44 @@ export const PlannerWizard: React.FC<PlannerWizardProps> = ({
       <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xl shadow-slate-200/50 overflow-hidden">
         {/* Planner Header */}
         <div className="bg-gradient-to-br from-slate-900 via-teal-950 to-slate-900 p-6 sm:p-8 text-white relative overflow-hidden">
-          <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-teal-500/15 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-1/3 -mb-10 w-48 h-48 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
           
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/20 text-teal-300 text-xs font-bold uppercase tracking-wider mb-2.5 border border-teal-400/30">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>AI Prompt Engineering Engine</span>
+                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                <span>Welcome to TripGenie</span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight font-display text-white">
-                Design Your Dream Itinerary
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight font-display text-white">
+                AI Travel Planner with Visual References
               </h1>
-              <p className="text-sm text-slate-300 mt-1 max-w-xl">
-                Configure your destination, budget, group, and pacing. TripGenie leverages Gemini 3.7 Flash with structured schema reasoning.
+              <p className="text-sm text-slate-300 mt-1.5 max-w-xl leading-relaxed">
+                Generate complete day-by-day itineraries with photos, accurate cost estimates in Indian Rupee (₹), dining picks, and transit clustering.
               </p>
+
+              {/* Fast Feature Highlight Chips */}
+              <div className="flex flex-wrap gap-2 mt-4 pt-1">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 text-slate-200 text-xs font-medium border border-white/10">
+                  <span className="text-teal-300 font-bold">📸</span> Day-by-Day Photos
+                </div>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 text-slate-200 text-xs font-medium border border-white/10">
+                  <span className="text-amber-300 font-bold">⚡</span> Fast Zero-Lag AI
+                </div>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 text-slate-200 text-xs font-medium border border-white/10">
+                  <span className="text-emerald-300 font-bold">₹</span> INR & Global Currency
+                </div>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 text-slate-200 text-xs font-medium border border-white/10">
+                  <span className="text-cyan-300 font-bold">🧭</span> Smart Transit Routes
+                </div>
+              </div>
             </div>
 
             <button
               type="button"
               id="prompt-lab-quick-link"
               onClick={onOpenPromptLab}
-              className="self-start sm:self-center inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold backdrop-blur-xs transition-colors border border-white/15 cursor-pointer"
+              className="self-start sm:self-center inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold backdrop-blur-xs transition-colors border border-white/15 cursor-pointer shrink-0"
             >
               <Cpu className="w-4 h-4 text-teal-300" />
               <span>Prompt Architecture</span>
@@ -504,6 +535,66 @@ export const PlannerWizard: React.FC<PlannerWizardProps> = ({
               </div>
             </div>
 
+            {/* Seat Selection Option for Flight & Transit */}
+            <div className="pt-2 border-t border-slate-200/80 space-y-2.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <Armchair className="w-3.5 h-3.5 text-teal-600" />
+                  <span>Seat Selection Preference (Flight / Train)</span>
+                  <span className="px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 text-[10px] font-extrabold border border-teal-200">
+                    Selected: {selectedSeatCode}
+                  </span>
+                </label>
+
+                {/* Interactive Map Trigger Button */}
+                <button
+                  type="button"
+                  onClick={() => setIsSeatModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-700 hover:text-teal-900 bg-teal-50 hover:bg-teal-100 border border-teal-200/80 px-2.5 py-1 rounded-xl transition-colors cursor-pointer self-start sm:self-auto"
+                >
+                  <Plane className="w-3.5 h-3.5 text-teal-600" />
+                  <span>Select on Cabin Map</span>
+                  <span className="text-[10px] bg-teal-600 text-white px-1.5 py-0.2 rounded font-bold">
+                    {selectedSeatCode}
+                  </span>
+                </button>
+              </div>
+
+              {/* Quick Select Seat Chips */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+                {[
+                  { id: 'window', label: '🪟 Window', desc: 'Scenic views', code: '12A' },
+                  { id: 'aisle', label: '🚶 Aisle', desc: 'Easy exit', code: '12C' },
+                  { id: 'extra-legroom', label: '💺 Extra Legroom', desc: 'Exit row space', code: '11A' },
+                  { id: 'front-cabin', label: '✈️ Front Cabin', desc: 'Fast deplane', code: '4A' },
+                  { id: 'sleeper', label: '🚂 Sleeper', desc: 'Night berth', code: 'B2' },
+                  { id: 'any', label: '✨ Any Seat', desc: 'Auto assigned', code: '14D' },
+                ].map((s) => {
+                  const isSelected = seatPreference === s.id;
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => {
+                        setSeatPreference(s.id as any);
+                        setSelectedSeatCode(s.code);
+                      }}
+                      className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
+                        isSelected
+                          ? 'bg-teal-600 text-white border-teal-600 shadow-xs'
+                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      <span className="block text-xs font-bold truncate">{s.label}</span>
+                      <span className={`block text-[10px] truncate ${isSelected ? 'text-teal-100' : 'text-slate-400'}`}>
+                        {s.desc}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div>
               <label className="text-xs font-bold text-slate-700 block mb-1.5">
                 Special Requests & Notes (Optional)
@@ -614,6 +705,16 @@ export const PlannerWizard: React.FC<PlannerWizardProps> = ({
           </div>
         </form>
       </div>
+
+      {/* Interactive Cabin Seat Selector Modal */}
+      <SeatSelectorModal
+        isOpen={isSeatModalOpen}
+        currentSeatCode={selectedSeatCode}
+        currentPreference={seatPreference}
+        destination={destination || 'Destination'}
+        onSelectSeat={handleSeatSelected}
+        onClose={() => setIsSeatModalOpen(false)}
+      />
     </div>
   );
 };

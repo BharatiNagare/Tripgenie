@@ -52,8 +52,64 @@ const DESTINATION_IMAGES: Record<string, string> = {
   london: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1600&q=85",
   dubai: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1600&q=85",
   singapore: "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=1600&q=85",
+  india: "https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=1600&q=85",
+  delhi: "https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=1600&q=85",
+  jaipur: "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=1600&q=85",
+  goa: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=1600&q=85",
+  kerala: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=1600&q=85",
+  mumbai: "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=1600&q=85",
   default: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1600&q=85",
 };
+
+const CATEGORY_IMAGES: Record<string, string[]> = {
+  Sightseeing: [
+    "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1500835556837-99ac94a94552?auto=format&fit=crop&w=800&q=80",
+  ],
+  "Food & Drink": [
+    "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=800&q=80",
+  ],
+  "Culture & History": [
+    "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=800&q=80",
+  ],
+  "Adventure & Nature": [
+    "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
+  ],
+  "Photography & Views": [
+    "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80",
+  ],
+  Shopping: [
+    "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80",
+  ],
+  Nightlife: [
+    "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1554797589-7241bb691973?auto=format&fit=crop&w=800&q=80",
+  ],
+  Relaxation: [
+    "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=800&q=80",
+  ],
+};
+
+function getActivityImage(category: string, title: string): string {
+  const pool = CATEGORY_IMAGES[category] || CATEGORY_IMAGES.Sightseeing;
+  let hash = 0;
+  for (let i = 0; i < (title || "").length; i++) {
+    hash = (hash << 5) - hash + title.charCodeAt(i);
+    hash |= 0;
+  }
+  return pool[Math.abs(hash) % pool.length];
+}
 
 function getHeroImageForDestination(dest: string): string {
   const clean = dest.toLowerCase().replace(/[^a-z]/g, "");
@@ -83,6 +139,8 @@ app.post("/api/generate-itinerary", async (req, res) => {
   const currency = preferences.currency || "USD";
   const groupType = preferences.groupType || "couple";
   const pace = preferences.pace || "balanced";
+  const seatPref = preferences.seatPreference || "window";
+  const seatCode = preferences.selectedSeatCode || "12A";
   const interests = (preferences.interests || ["culture", "foodie", "sightseeing"]).join(", ");
   const dietary = (preferences.dietaryRestrictions || []).join(", ") || "None";
   const specialRequests = preferences.specialRequests || "None";
@@ -106,6 +164,7 @@ Travel details:
 - Target Budget Amount: ${preferences.targetBudgetAmount ? `${preferences.targetBudgetAmount} ${currency}` : "Provide realistic estimation"}
 - Preferred Pace: ${pace}
 - Key Interests: ${interests}
+- Transit Seating Preference: ${seatPref} (Assigned Seat: ${seatCode})
 - Dietary Preferences: ${dietary}
 - Prompt Strategy Focus: ${promptStrategy}
 - Special Notes / Constraints: ${specialRequests}
@@ -282,11 +341,25 @@ Make sure every single day from Day 1 to Day ${durationDays} has distinct mornin
     const textOutput = response.text || "{}";
     const parsedData = JSON.parse(textOutput);
 
-    // Attach hero image if not provided
+    // Attach hero image and activity images if not provided
     const heroImageUrl = getHeroImageForDestination(parsedData.destination || destination);
+
+    const enrichedDays = (parsedData.days || []).map((day: any, dIdx: number) => {
+      const bannerImageUrl = day.bannerImageUrl || getHeroImageForDestination(parsedData.destination || destination);
+      const enrichedActivities = (day.activities || []).map((act: any) => ({
+        ...act,
+        imageUrl: act.imageUrl || getActivityImage(act.category || "Sightseeing", act.title || `Day ${dIdx + 1}`),
+      }));
+      return {
+        ...day,
+        bannerImageUrl,
+        activities: enrichedActivities,
+      };
+    });
 
     const fullItinerary = {
       ...parsedData,
+      days: enrichedDays,
       id: `trip-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       createdAt: new Date().toISOString(),
       heroImageUrl,
