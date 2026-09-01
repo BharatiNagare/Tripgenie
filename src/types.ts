@@ -177,17 +177,38 @@ export interface Itinerary {
   promptMetrics?: PromptMetrics;
 }
 
+export interface DestinationAttraction {
+  name: string;
+  estimatedPriceUSD: number;
+  free: boolean;
+  category: string;
+}
+
 export interface DestinationInspiration {
   id: string;
   city: string;
   country: string;
   tagline: string;
   imageUrl: string;
+  secondaryImages?: string[];
   vibe: string[];
+  region: 'Asia' | 'Europe' | 'Americas' | 'Middle East' | 'Africa' | 'Oceania';
+  budgetTier: 'budget' | 'moderate' | 'luxury';
   avgDailyCostUSD: number;
+  breakdownUSD?: {
+    stayUSD: number;
+    foodUSD: number;
+    transitUSD: number;
+    activitiesUSD: number;
+  };
   bestMonths: string;
+  idealDurationDays?: number;
+  popularityRank?: number;
+  rating?: number;
+  reviewCount?: number;
   flightTimeFromMajorHubs: string;
   highlights: string[];
+  topAttractions?: DestinationAttraction[];
 }
 
 export interface ConciergeMessage {

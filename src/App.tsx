@@ -40,6 +40,11 @@ export default function App() {
   const [isExploreOpen, setIsExploreOpen] = useState<boolean>(false);
   const [isExportOpen, setIsExportOpen] = useState<boolean>(false);
   const [swapActivityData, setSwapActivityData] = useState<{ activity: Activity; dayTheme: string } | null>(null);
+  const [exploreSelection, setExploreSelection] = useState<{
+    dest: string;
+    budgetTier?: any;
+    durationDays?: number;
+  } | null>(null);
 
   // Load saved trips from localStorage on mount
   useEffect(() => {
@@ -176,6 +181,10 @@ export default function App() {
               onGenerate={handleGenerateItinerary}
               isLoading={isLoading}
               currentCurrency={currentCurrency}
+              initialDestination={exploreSelection?.dest}
+              initialBudgetTier={exploreSelection?.budgetTier}
+              initialDurationDays={exploreSelection?.durationDays}
+              onOpenExplore={() => setIsExploreOpen(true)}
             />
 
             {/* Academic Project Highlights & Architecture Banner */}
@@ -274,7 +283,8 @@ export default function App() {
       <ExploreModal
         isOpen={isExploreOpen}
         onClose={() => setIsExploreOpen(false)}
-        onSelectDestination={(dest) => {
+        onSelectDestination={(dest, budgetTier, durationDays) => {
+          setExploreSelection({ dest, budgetTier, durationDays });
           setViewMode('planner');
         }}
         currentCurrency={currentCurrency}

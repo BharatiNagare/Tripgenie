@@ -31,6 +31,10 @@ interface PlannerWizardProps {
   onGenerate: (prefs: TripPreferences) => void;
   isLoading: boolean;
   currentCurrency: string;
+  initialDestination?: string;
+  initialBudgetTier?: BudgetTier;
+  initialDurationDays?: number;
+  onOpenExplore?: () => void;
 }
 
 const POPULAR_DESTINATIONS = [
@@ -63,13 +67,30 @@ export const PlannerWizard: React.FC<PlannerWizardProps> = ({
   onGenerate,
   isLoading,
   currentCurrency,
+  initialDestination,
+  initialBudgetTier,
+  initialDurationDays,
+  onOpenExplore,
 }) => {
-  const [destination, setDestination] = useState('');
+  const [destination, setDestination] = useState(initialDestination || '');
   const [sourceCity, setSourceCity] = useState('');
-  const [durationDays, setDurationDays] = useState<number>(4);
+  const [durationDays, setDurationDays] = useState<number>(initialDurationDays || 4);
   const [groupType, setGroupType] = useState<TravelGroup>('couple');
-  const [budgetTier, setBudgetTier] = useState<BudgetTier>('moderate');
+  const [budgetTier, setBudgetTier] = useState<BudgetTier>(initialBudgetTier || 'moderate');
   const [targetBudgetAmount, setTargetBudgetAmount] = useState<string>('');
+
+  // Sync if initial props change
+  React.useEffect(() => {
+    if (initialDestination) setDestination(initialDestination);
+  }, [initialDestination]);
+
+  React.useEffect(() => {
+    if (initialBudgetTier) setBudgetTier(initialBudgetTier);
+  }, [initialBudgetTier]);
+
+  React.useEffect(() => {
+    if (initialDurationDays) setDurationDays(initialDurationDays);
+  }, [initialDurationDays]);
   const [pace, setPace] = useState<TravelPace>('balanced');
   const [selectedInterests, setSelectedInterests] = useState<string[]>([
     'culture',
@@ -198,21 +219,34 @@ export const PlannerWizard: React.FC<PlannerWizardProps> = ({
         <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-8">
           {/* 1. Destination Input */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <label htmlFor="destination-input" className="text-sm font-bold text-slate-900 flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-teal-600" />
                 <span>Where do you want to travel?</span>
                 <span className="text-rose-500">*</span>
               </label>
-              <button
-                type="button"
-                id="btn-surprise-me"
-                onClick={handleSurpriseMe}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-700 hover:text-teal-900 bg-teal-50 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
-              >
-                <Shuffle className="w-3.5 h-3.5" />
-                <span>Surprise Me</span>
-              </button>
+              <div className="flex items-center gap-2">
+                {onOpenExplore && (
+                  <button
+                    type="button"
+                    id="btn-open-explore-places"
+                    onClick={onOpenExplore}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-800 hover:text-teal-950 bg-teal-100/90 hover:bg-teal-200 px-3 py-1 rounded-lg border border-teal-300 transition-colors cursor-pointer"
+                  >
+                    <Compass className="w-3.5 h-3.5 text-teal-700" />
+                    <span>Explore Places &amp; Budgets</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  id="btn-surprise-me"
+                  onClick={handleSurpriseMe}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                >
+                  <Shuffle className="w-3.5 h-3.5" />
+                  <span>Surprise Me</span>
+                </button>
+              </div>
             </div>
 
             <div className="relative">
